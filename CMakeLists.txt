@@ -39,5 +39,5 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_executable(cassie_mpc main.cpp)
+add_executable(cassie_mpc main.cpp OptNode.cpp OptNode.h MPC.cpp MPC.h)
 target_link_libraries(cassie_mpc drake::drake)
