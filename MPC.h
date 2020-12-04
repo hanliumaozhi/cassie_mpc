@@ -9,6 +9,8 @@
 #include <drake/solvers/snopt_solver.h>
 #include <drake/solvers/solve.h>
 
+#include "OptNode.h"
+
 class MPC {
 public:
     MPC(int var_num_per_node, int node_num, double spring_stiffness, double total_mass, double double_support_duration,
@@ -28,6 +30,8 @@ private:
     double single_support_duration_;
 
     std::shared_ptr<drake::solvers::MathematicalProgram> program_;
+
+    std::vector<std::unique_ptr<OptNode>> node_list_;
 };
 
 
