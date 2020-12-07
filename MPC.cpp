@@ -18,5 +18,7 @@ MPC::MPC(int var_num_per_node, int node_num, double spring_stiffness, double tot
 }
 
 void MPC::build() {
-
+    for (int i = 0; i < node_num_; ++i) {
+        node_list_.emplace_back(std::make_unique<OptNode>(std::to_string(i), var_num_per_node_, program_));
+    }
 }
