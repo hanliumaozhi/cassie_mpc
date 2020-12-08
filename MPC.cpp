@@ -262,6 +262,8 @@ void MPC::update(double rest_time, int current_state, std::vector<double>& data)
     tmp_word(0) = 0;
     tmp_word2(0) = 1;
 
+    Eigen::VectorXd inf_vector(1);
+    inf_vector << std::numeric_limits<double>::infinity();
     for (int i = 0; i < (node_num_-1); ++i) {
         int loop_state = (current_state+i) % 4;
         // update lambda
@@ -341,6 +343,41 @@ void MPC::update(double rest_time, int current_state, std::vector<double>& data)
             foot_constraints_[i*6+5]->UpdateLowerBound(tmp_word);
             foot_constraints_[i*6+5]->UpdateUpperBound(tmp_word);
         }
+
+        // left double
+        if(loop_state == 0){
+          foot_constraints_[i*6+0]->UpdateLowerBound(tmp_word);
+          foot_constraints_[i*6+0]->UpdateUpperBound(tmp_word);
+          foot_constraints_[i*6+1]->UpdateLowerBound(tmp_word);
+          foot_constraints_[i*6+1]->UpdateUpperBound(tmp_word);
+          foot_constraints_[i*6+2]->UpdateLowerBound(tmp_word);
+          foot_constraints_[i*6+2]->UpdateUpperBound(tmp_word);
+
+          foot_constraints_[i*6+3]->UpdateLowerBound(-inf_vector);
+          foot_constraints_[i*6+3]->UpdateUpperBound(inf_vector);
+          foot_constraints_[i*6+4]->UpdateLowerBound(-inf_vector);
+          foot_constraints_[i*6+4]->UpdateUpperBound(inf_vector);
+          foot_constraints_[i*6+5]->UpdateLowerBound(-inf_vector);
+          foot_constraints_[i*6+5]->UpdateUpperBound(inf_vector);
+
+        }
+
+      if(loop_state == 2){
+        foot_constraints_[i*6+0]->UpdateLowerBound(-inf_vector);
+        foot_constraints_[i*6+0]->UpdateUpperBound(inf_vector);
+        foot_constraints_[i*6+1]->UpdateLowerBound(-inf_vector);
+        foot_constraints_[i*6+1]->UpdateUpperBound(inf_vector);
+        foot_constraints_[i*6+2]->UpdateLowerBound(-inf_vector);
+        foot_constraints_[i*6+2]->UpdateUpperBound(inf_vector);
+
+        foot_constraints_[i*6+3]->UpdateLowerBound(tmp_word);
+        foot_constraints_[i*6+3]->UpdateUpperBound(tmp_word);
+        foot_constraints_[i*6+4]->UpdateLowerBound(tmp_word);
+        foot_constraints_[i*6+4]->UpdateUpperBound(tmp_word);
+        foot_constraints_[i*6+5]->UpdateLowerBound(tmp_word);
+        foot_constraints_[i*6+5]->UpdateUpperBound(tmp_word);
+
+      }
     }
 
 }
