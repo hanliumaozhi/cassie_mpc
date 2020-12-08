@@ -20,6 +20,8 @@ public:
 
     void build();
 
+    void update(double rest_time, int current_state, std::vector<double>& data);
+
 private:
     std::unique_ptr<Eigen::VectorXd> var_sol_;
     int var_num_per_node_;
@@ -45,6 +47,9 @@ private:
     std::vector<drake::solvers::LinearConstraint*> duration_constraints_;
 
     std::vector<drake::solvers::Constraint*> dynamics_constraints_;
+    std::vector<drake::solvers::LinearConstraint*> foot_constraints_;
+
+    std::vector<double> time_vec_;
 };
 
 

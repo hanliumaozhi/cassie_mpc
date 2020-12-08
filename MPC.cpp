@@ -19,6 +19,10 @@ MPC::MPC(int var_num_per_node, int node_num, double spring_stiffness, double tot
 
     omega_ = std::sqrt(spring_stiffness_/total_mass_);
 
+    time_vec_.push_back(double_support_duration_);
+    time_vec_.push_back(single_support_duration_);
+
+
 }
 
 void MPC::build() {
@@ -194,5 +198,149 @@ void MPC::build() {
                 program_->AddConstraint(node_list_[i+1]->decision_var_ptr_(6) -
                 (node_list_[i]->decision_var_ptr_(6)+node_list_[i]->decision_var_ptr_(7)*duration_var_ptr_(i)
                 +0.5*node_list_[i]->decision_var_ptr_(14)*duration_var_ptr_(i)) == 0).evaluator().get());
+
+        foot_constraints_.push_back(
+                program_->AddLinearConstraint(node_list_[i]->decision_var_ptr_(8)-
+                                                node_list_[i+1]->decision_var_ptr_(8),
+                                              0, 0).evaluator().get());
+        foot_constraints_.push_back(
+                program_->AddLinearConstraint(node_list_[i]->decision_var_ptr_(9)-
+                                              node_list_[i+1]->decision_var_ptr_(9),
+                                              0, 0).evaluator().get());
+        foot_constraints_.push_back(
+                program_->AddLinearConstraint(node_list_[i]->decision_var_ptr_(10)-
+                                              node_list_[i+1]->decision_var_ptr_(10),
+                                              0, 0).evaluator().get());
+        foot_constraints_.push_back(
+                program_->AddLinearConstraint(node_list_[i]->decision_var_ptr_(11)-
+                                              node_list_[i+1]->decision_var_ptr_(11),
+                                              0, 0).evaluator().get());
+        foot_constraints_.push_back(
+                program_->AddLinearConstraint(node_list_[i]->decision_var_ptr_(12)-
+                                              node_list_[i+1]->decision_var_ptr_(12),
+                                              0, 0).evaluator().get());
+        foot_constraints_.push_back(
+                program_->AddLinearConstraint(node_list_[i]->decision_var_ptr_(13)-
+                                              node_list_[i+1]->decision_var_ptr_(13),
+                                              0, 0).evaluator().get());
     }
+}
+
+void MPC::update(double rest_time, int current_state, std::vector<double>& data)
+{
+    // 0 left double 1 left single 2 right double 3 right single
+
+    // 1. update const constraint
+    Eigen::VectorXd tmp_word(1);
+    Eigen::VectorXd tmp_word2(1);
+    for (int i = 0; i < 14; ++i) {
+        tmp_word[0] = data[i];
+        initial_constraints_[i]->UpdateLowerBound(tmp_word);
+        initial_constraints_[i]->UpdateUpperBound(tmp_word);
+    }
+
+    for (int i = 0; i < 3; ++i) {
+        tmp_word[0] = data[i+14];
+        final_constraints_[i]->UpdateLowerBound(tmp_word);
+        final_constraints_[i]->UpdateUpperBound(tmp_word);
+    }
+
+    // 2. update duration constraint
+    tmp_word[0] = rest_time;
+    duration_constraints_[0]->UpdateUpperBound(tmp_word);
+    duration_constraints_[0]->UpdateLowerBound(tmp_word);
+    int phase = 0;
+    if (current_state == 1 || current_state == 3){
+        phase = 1;
+    }
+    for (int i = 1; i < (node_num_-1); ++i) {
+        tmp_word[0] = time_vec_[(i+phase)%2];
+        duration_constraints_[i]->UpdateUpperBound(tmp_word);
+        duration_constraints_[i]->UpdateLowerBound(tmp_word);
+    }
+
+    tmp_word(0) = 0;
+    tmp_word2(0) = 1;
+
+    for (int i = 0; i < (node_num_-1); ++i) {
+        int loop_state = (current_state+i) % 4;
+        // update lambda
+        if (loop_state == 0 || loop_state == 2){
+            node_list_[i]->zmp_constraints_[0]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[0]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[1]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[1]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[2]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[2]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[3]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[3]->UpdateUpperBound(tmp_word2);
+
+            node_list_[i]->zmp_constraints_[5]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[5]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[6]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[6]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[7]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[7]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[8]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[8]->UpdateUpperBound(tmp_word2);
+        }
+
+        if (loop_state == 1){
+            node_list_[i]->zmp_constraints_[0]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[0]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[1]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[1]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[2]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[2]->UpdateUpperBound(tmp_word);
+            node_list_[i]->zmp_constraints_[3]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[3]->UpdateUpperBound(tmp_word);
+
+            node_list_[i]->zmp_constraints_[5]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[5]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[6]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[6]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[7]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[7]->UpdateUpperBound(tmp_word);
+            node_list_[i]->zmp_constraints_[8]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[8]->UpdateUpperBound(tmp_word);
+        }
+
+        if ( loop_state == 3){
+            node_list_[i]->zmp_constraints_[0]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[0]->UpdateUpperBound(tmp_word);
+            node_list_[i]->zmp_constraints_[1]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[1]->UpdateUpperBound(tmp_word);
+            node_list_[i]->zmp_constraints_[2]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[2]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[3]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[3]->UpdateUpperBound(tmp_word2);
+
+            node_list_[i]->zmp_constraints_[5]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[5]->UpdateUpperBound(tmp_word);
+            node_list_[i]->zmp_constraints_[6]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[6]->UpdateUpperBound(tmp_word);
+            node_list_[i]->zmp_constraints_[7]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[7]->UpdateUpperBound(tmp_word2);
+            node_list_[i]->zmp_constraints_[8]->UpdateLowerBound(tmp_word);
+            node_list_[i]->zmp_constraints_[8]->UpdateUpperBound(tmp_word2);
+        }
+
+        // update foot position
+
+        if (loop_state == 1 || loop_state == 3){
+            foot_constraints_[i*6+0]->UpdateLowerBound(tmp_word);
+            foot_constraints_[i*6+0]->UpdateUpperBound(tmp_word);
+            foot_constraints_[i*6+1]->UpdateLowerBound(tmp_word);
+            foot_constraints_[i*6+1]->UpdateUpperBound(tmp_word);
+            foot_constraints_[i*6+2]->UpdateLowerBound(tmp_word);
+            foot_constraints_[i*6+2]->UpdateUpperBound(tmp_word);
+            foot_constraints_[i*6+3]->UpdateLowerBound(tmp_word);
+            foot_constraints_[i*6+3]->UpdateUpperBound(tmp_word);
+            foot_constraints_[i*6+4]->UpdateLowerBound(tmp_word);
+            foot_constraints_[i*6+4]->UpdateUpperBound(tmp_word);
+            foot_constraints_[i*6+5]->UpdateLowerBound(tmp_word);
+            foot_constraints_[i*6+5]->UpdateUpperBound(tmp_word);
+        }
+    }
+
 }
