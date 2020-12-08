@@ -15,11 +15,22 @@ MPC::MPC(int var_num_per_node, int node_num, double spring_stiffness, double tot
     program_ = std::make_shared<drake::solvers::MathematicalProgram>();
     var_sol_ = std::make_unique<Eigen::VectorXd>(var_num_per_node_*node_num_);
 
+    duration_var_ptr_ = program_->NewContinuousVariables((node_num_-1), "duration_var");
+
+    omega_ = std::sqrt(spring_stiffness_/total_mass_);
+
 }
 
 void MPC::build() {
     for (int i = 0; i < node_num_; ++i) {
         node_list_.emplace_back(std::make_unique<OptNode>(std::to_string(i), var_num_per_node_, program_));
+    }
+
+    //0: time constraint
+    for (int i = 0; i < (node_num_-1); ++i) {
+        duration_constraints_.push_back(
+                program_->AddLinearConstraint(duration_var_ptr_[i],
+                                              0, 0).evaluator().get());
     }
 
     //initial state constraint
@@ -73,7 +84,7 @@ void MPC::build() {
             program_->AddLinearConstraint(node_list_[0]->decision_var_ptr_(13),
                                           0, 0).evaluator().get());
 
-    // final state check z
+    //final state check z
     final_constraints_.push_back(
             program_->AddLinearConstraint(node_list_[node_num_-1]->decision_var_ptr_(0),
                                           0, 0).evaluator().get());
@@ -83,4 +94,105 @@ void MPC::build() {
     final_constraints_.push_back(
             program_->AddLinearConstraint(node_list_[node_num_-1]->decision_var_ptr_(6),
                                           0, 0).evaluator().get());
+
+    // dynamics constraint
+    for (int i = 0; i < (node_num_-1); ++i) {
+        //1. x
+        drake::symbolic::Expression alpha = drake::symbolic::sqrt(9.81/node_list_[i]->decision_var_ptr_(2));
+
+        // begin with left
+        Eigen::Matrix<drake::symbolic::Expression, 2, 1> left_toe;
+        Eigen::Matrix<drake::symbolic::Expression, 2, 1> left_heel;
+
+        left_toe(0) =  node_list_[i]->decision_var_ptr_(8) + toe_position_*drake::symbolic::cos(
+                node_list_[i]->decision_var_ptr_(10));
+
+        left_toe(1) =  node_list_[i]->decision_var_ptr_(8) + toe_position_*drake::symbolic::sin(
+                node_list_[i]->decision_var_ptr_(10));
+
+        left_heel(0) =  node_list_[i]->decision_var_ptr_(9) + heel_position_*drake::symbolic::cos(
+                node_list_[i]->decision_var_ptr_(10));
+
+        left_heel(1) =  node_list_[i]->decision_var_ptr_(9) + heel_position_*drake::symbolic::sin(
+                node_list_[i]->decision_var_ptr_(10));
+
+        Eigen::Matrix<drake::symbolic::Expression, 2, 1> right_toe;
+        Eigen::Matrix<drake::symbolic::Expression, 2, 1> right_heel;
+
+        right_toe(0) = node_list_[i]->decision_var_ptr_(11) + toe_position_*drake::symbolic::cos(
+                node_list_[i]->decision_var_ptr_(13));
+
+        right_toe(1) = node_list_[i]->decision_var_ptr_(11) + toe_position_*drake::symbolic::sin(
+                node_list_[i]->decision_var_ptr_(13));
+
+        right_heel(0) = node_list_[i]->decision_var_ptr_(12) + heel_position_*drake::symbolic::cos(
+                node_list_[i]->decision_var_ptr_(13));
+
+        right_heel(1) = node_list_[i]->decision_var_ptr_(12) + heel_position_*drake::symbolic::sin(
+                node_list_[i]->decision_var_ptr_(13));
+
+        drake::symbolic::Expression zmp_begin_x = node_list_[i]->decision_var_ptr_(15)*left_toe(0)+
+                node_list_[i]->decision_var_ptr_(16)*left_heel(0)+
+                node_list_[i]->decision_var_ptr_(17)*right_toe(0)+
+                node_list_[i]->decision_var_ptr_(18)*right_heel(0);
+
+        drake::symbolic::Expression zmp_end_x = node_list_[i]->decision_var_ptr_(19)*left_toe(0)+
+                                                  node_list_[i]->decision_var_ptr_(20)*left_heel(0)+
+                                                  node_list_[i]->decision_var_ptr_(21)*right_toe(0)+
+                                                  node_list_[i]->decision_var_ptr_(22)*right_heel(0);
+
+        drake::symbolic::Expression beta_1_x = (node_list_[i]->decision_var_ptr_(0)-zmp_begin_x)/2+
+                (node_list_[i]->decision_var_ptr_(3)*duration_var_ptr_(i)-(zmp_end_x-zmp_begin_x))/(2*alpha*duration_var_ptr_(i));
+
+        drake::symbolic::Expression beta_2_x = (node_list_[i]->decision_var_ptr_(0)-zmp_begin_x)/2-
+                (node_list_[i]->decision_var_ptr_(3)*duration_var_ptr_(i)-(zmp_end_x-zmp_begin_x))/(2*alpha*duration_var_ptr_(i));
+
+        // x
+        dynamics_constraints_.push_back(
+                program_->AddConstraint(node_list_[i+1]->decision_var_ptr_(0) -
+                (beta_1_x*drake::symbolic::exp(alpha*duration_var_ptr_(i))+
+                beta_2_x*drake::symbolic::exp(-alpha*duration_var_ptr_(i))+zmp_end_x) == 0).evaluator().get());
+
+
+        drake::symbolic::Expression zmp_begin_y = node_list_[i]->decision_var_ptr_(15)*left_toe(1)+
+                                                  node_list_[i]->decision_var_ptr_(16)*left_heel(1)+
+                                                  node_list_[i]->decision_var_ptr_(17)*right_toe(1)+
+                                                  node_list_[i]->decision_var_ptr_(18)*right_heel(1);
+
+        drake::symbolic::Expression zmp_end_y = node_list_[i]->decision_var_ptr_(19)*left_toe(1)+
+                                                node_list_[i]->decision_var_ptr_(20)*left_heel(1)+
+                                                node_list_[i]->decision_var_ptr_(21)*right_toe(1)+
+                                                node_list_[i]->decision_var_ptr_(22)*right_heel(1);
+
+        drake::symbolic::Expression beta_1_y = (node_list_[i]->decision_var_ptr_(1)-zmp_begin_y)/2+
+                (node_list_[i]->decision_var_ptr_(4)*duration_var_ptr_(i)-(zmp_end_y-zmp_begin_y))/(2*alpha*duration_var_ptr_(i));
+
+        drake::symbolic::Expression beta_2_y = (node_list_[i]->decision_var_ptr_(1)-zmp_begin_y)/2-
+                (node_list_[i]->decision_var_ptr_(4)*duration_var_ptr_(i)-(zmp_end_y-zmp_begin_y))/(2*alpha*duration_var_ptr_(i));
+
+        // y
+        dynamics_constraints_.push_back(
+                program_->AddConstraint(node_list_[i+1]->decision_var_ptr_(1) -
+                (beta_1_y*drake::symbolic::exp(alpha*duration_var_ptr_(i))+
+                beta_2_y*drake::symbolic::exp(-alpha*duration_var_ptr_(i))+zmp_end_y) == 0).evaluator().get());
+
+        drake::symbolic::Expression d1 = node_list_[i]->decision_var_ptr_(2) -
+                node_list_[i]->decision_var_ptr_(23) + 9.81/(omega_*omega_);
+
+        drake::symbolic::Expression d2 = node_list_[i]->decision_var_ptr_(5)/(omega_) -
+                (node_list_[i]->decision_var_ptr_(24)-node_list_[i]->decision_var_ptr_(23))/(duration_var_ptr_(i)*omega_);
+
+        // z
+        dynamics_constraints_.push_back(
+                program_->AddConstraint(node_list_[i+1]->decision_var_ptr_(2) -
+                (d1*drake::symbolic::cos(omega_*duration_var_ptr_(i)) +
+                d2*drake::symbolic::sin(omega_*duration_var_ptr_(i))+node_list_[i]->decision_var_ptr_(24)
+                -9.81/(omega_*omega_)) == 0).evaluator().get());
+
+        // theta
+        dynamics_constraints_.push_back(
+                program_->AddConstraint(node_list_[i+1]->decision_var_ptr_(6) -
+                (node_list_[i]->decision_var_ptr_(6)+node_list_[i]->decision_var_ptr_(7)*duration_var_ptr_(i)
+                +0.5*node_list_[i]->decision_var_ptr_(14)*duration_var_ptr_(i)) == 0).evaluator().get());
+    }
 }

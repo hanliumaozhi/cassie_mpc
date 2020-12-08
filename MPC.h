@@ -29,12 +29,22 @@ private:
     double double_support_duration_;
     double single_support_duration_;
 
+    double toe_position_{0.08};
+    double heel_position_{-0.08};
+
+    double omega_;
+
     std::shared_ptr<drake::solvers::MathematicalProgram> program_;
 
     std::vector<std::unique_ptr<OptNode>> node_list_;
 
     std::vector<drake::solvers::LinearConstraint*> initial_constraints_;
     std::vector<drake::solvers::LinearConstraint*> final_constraints_;
+
+    drake::solvers::VectorXDecisionVariable duration_var_ptr_;
+    std::vector<drake::solvers::LinearConstraint*> duration_constraints_;
+
+    std::vector<drake::solvers::Constraint*> dynamics_constraints_;
 };
 
 
