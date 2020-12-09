@@ -28,6 +28,7 @@ MPC::MPC(int var_num_per_node, int node_num, double spring_stiffness, double tot
 void MPC::build() {
     for (int i = 0; i < node_num_; ++i) {
         node_list_.emplace_back(std::make_unique<OptNode>(std::to_string(i), var_num_per_node_, program_));
+        node_list_[i]->build();
     }
 
     //0: time constraint
@@ -102,6 +103,7 @@ void MPC::build() {
     // dynamics constraint
     for (int i = 0; i < (node_num_-1); ++i) {
         //1. x
+        //std::cout<<9.81/node_list_[i]->decision_var_ptr_(2)<<std::endl;
         drake::symbolic::Expression alpha = drake::symbolic::sqrt(9.81/node_list_[i]->decision_var_ptr_(2));
 
         // begin with left
@@ -262,6 +264,7 @@ void MPC::update(double rest_time, int current_state, std::vector<double>& data)
     tmp_word(0) = 0;
     tmp_word2(0) = 1;
 
+
     Eigen::VectorXd inf_vector(1);
     inf_vector << std::numeric_limits<double>::infinity();
     for (int i = 0; i < (node_num_-1); ++i) {
@@ -379,5 +382,7 @@ void MPC::update(double rest_time, int current_state, std::vector<double>& data)
 
       }
     }
+
+
 
 }

@@ -22,8 +22,10 @@ public:
 
     void update(double rest_time, int current_state, std::vector<double>& data);
 
-private:
     std::unique_ptr<Eigen::VectorXd> var_sol_;
+    std::shared_ptr<drake::solvers::MathematicalProgram> program_;
+
+private:
     int var_num_per_node_;
     int node_num_;
     double spring_stiffness_;
@@ -35,8 +37,6 @@ private:
     double heel_position_{-0.08};
 
     double omega_;
-
-    std::shared_ptr<drake::solvers::MathematicalProgram> program_;
 
     std::vector<std::unique_ptr<OptNode>> node_list_;
 

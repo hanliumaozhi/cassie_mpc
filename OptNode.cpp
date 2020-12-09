@@ -16,7 +16,7 @@ void OptNode::build()
 {
     Eigen::VectorXd one(1);
     one << 1;
-    Eigen::VectorXd ones(1);
+    Eigen::VectorXd ones(4);
     ones << 1, 1, 1, 1;
     // 1. zmp constraints left front -> right back
     zmp_constraints_.push_back(
@@ -72,9 +72,9 @@ void OptNode::build()
     auto left_com = rot_matrix*(left_foot-com_position);
 
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(left_com(0) >= 10).evaluator().get());
+            program_->AddConstraint(left_com(0) >= 5).evaluator().get());
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(left_com(0) <= 30).evaluator().get());
+            program_->AddConstraint(left_com(0) <= 40).evaluator().get());
 
     foot_motion_constraints_.push_back(
             program_->AddConstraint(left_com(1) >= -40).evaluator().get());
@@ -88,14 +88,24 @@ void OptNode::build()
     auto right_com = rot_matrix*(right_foot-com_position);
 
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(right_com(0) >= -30).evaluator().get());
+            program_->AddConstraint(right_com(0) >= -40).evaluator().get());
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(right_com(0) <= -10).evaluator().get());
+            program_->AddConstraint(right_com(0) <= -5).evaluator().get());
 
     foot_motion_constraints_.push_back(
             program_->AddConstraint(right_com(1) >= -40).evaluator().get());
     foot_motion_constraints_.push_back(
             program_->AddConstraint(right_com(1) <= 40).evaluator().get());
+
+    //com z constraint
+
+    com_z_constraints_.push_back(program_->AddLinearConstraint(
+            decision_var_ptr_(2) >= 0.8).evaluator().get()
+            );
+
+    com_z_constraints_.push_back(program_->AddLinearConstraint(
+            decision_var_ptr_(2) <= 0.9).evaluator().get()
+    );
 
 
 

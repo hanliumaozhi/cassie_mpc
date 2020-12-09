@@ -23,6 +23,7 @@ public:
 
     std::vector<drake::solvers::Constraint*> foot_motion_constraints_;
     std::vector<drake::solvers::LinearConstraint*> zmp_constraints_;
+    std::vector<drake::solvers::LinearConstraint*> com_z_constraints_;
 };
 
 
