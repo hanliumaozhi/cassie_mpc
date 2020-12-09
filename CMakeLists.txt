@@ -5,6 +5,11 @@ option(RUN_X11_TESTS "Run tests that require X11" OFF)
 
 include(CTest)
 
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 if(APPLE)
     set(FIND_PYTHON_EXECUTABLE_PATHS /usr/local/opt/python@3.8/bin)
     set(FIND_PYTHON_INTERP_VERSION 3.8)

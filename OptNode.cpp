@@ -74,7 +74,7 @@ void OptNode::build()
     auto left_com = rot_matrix*(left_foot-com_position);
 
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(left_com(0) >= 0.05).evaluator().get());
+            program_->AddConstraint(left_com(0) >= -0.02).evaluator().get());
     foot_motion_constraints_.push_back(
             program_->AddConstraint(left_com(0) <= 0.4).evaluator().get());
 
@@ -92,7 +92,7 @@ void OptNode::build()
     foot_motion_constraints_.push_back(
             program_->AddConstraint(right_com(0) >= -0.4).evaluator().get());
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(right_com(0) <= -0.05).evaluator().get());
+            program_->AddConstraint(right_com(0) <= 0.02).evaluator().get());
 
     foot_motion_constraints_.push_back(
             program_->AddConstraint(right_com(1) >= -0.4).evaluator().get());

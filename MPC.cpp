@@ -335,7 +335,9 @@ void MPC::build() {
                                              node_list_[i]->decision_var_ptr_(5)),2) + drake::symbolic::pow(
                                                      (node_list_[i+1]->decision_var_ptr_(7)-
                                                      node_list_[i]->decision_var_ptr_(7)),2);
+      Cost = Cost + 10*drake::symbolic::pow((node_list_[i+1]->decision_var_ptr_(2)-0.86), 2);
     }
+
     // add end;
     program_->AddCost(Cost);
 }
@@ -354,9 +356,10 @@ void MPC::update(double rest_time, int current_state, std::vector<double>& data)
     }
 
     for (int i = 0; i < 3; ++i) {
-        tmp_word[0] = data[i+14];
+        tmp_word[0] = data[i+14]-0.1;
+        tmp_word2[0] = data[i+14]+0.1;
         end_constraints_[i]->UpdateLowerBound(tmp_word);
-        end_constraints_[i]->UpdateUpperBound(tmp_word);
+        end_constraints_[i]->UpdateUpperBound(tmp_word2);
     }
 
     // 2. update duration constraint
@@ -507,4 +510,5 @@ void MPC::print_var(const drake::solvers::MathematicalProgramResult& result)
         std::cout<<(*var_sol_)(i)<<" ";
     }
     std::cout<<std::endl;
+    std::cout<<result.get_optimal_cost()<<std::endl;
 }

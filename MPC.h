@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <drake/solvers/snopt_solver.h>
+#include <drake/solvers/ipopt_solver.h>
 #include <drake/solvers/solve.h>
 
 #include "OptNode.h"
