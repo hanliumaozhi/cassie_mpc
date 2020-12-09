@@ -54,6 +54,8 @@ private:
     drake::solvers::VectorXDecisionVariable end_var_ptr_;
     std::vector<drake::solvers::LinearConstraint*> end_constraints_;
 
+    std::vector<drake::solvers::LinearConstraint*> const_constraints_;
+
     std::vector<double> time_vec_;
 };
 

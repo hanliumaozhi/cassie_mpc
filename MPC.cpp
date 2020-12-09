@@ -201,7 +201,7 @@ void MPC::build() {
         dynamics_constraints_.push_back(
                 program_->AddConstraint(node_list_[i+1]->decision_var_ptr_(6) -
                 (node_list_[i]->decision_var_ptr_(6)+node_list_[i]->decision_var_ptr_(7)*duration_var_ptr_(i)
-                +0.5*node_list_[i]->decision_var_ptr_(14)*duration_var_ptr_(i)) == 0).evaluator().get());
+                +0.5*node_list_[i]->decision_var_ptr_(14)*duration_var_ptr_(i)*duration_var_ptr_(i)) == 0).evaluator().get());
 
         foot_constraints_.push_back(
                 program_->AddLinearConstraint(node_list_[i]->decision_var_ptr_(8)-
@@ -315,15 +315,29 @@ void MPC::build() {
     final_constraints_.push_back(
             program_->AddConstraint(end_var_ptr_(2) - (node_list_[node_num_-1]->decision_var_ptr_(6)+
             node_list_[node_num_-1]->decision_var_ptr_(7)*duration_var_ptr_(node_num_-1)+
-            0.5*node_list_[node_num_-1]->decision_var_ptr_(14)*duration_var_ptr_(node_num_-1)) == 0
+            0.5*node_list_[node_num_-1]->decision_var_ptr_(14)*duration_var_ptr_(node_num_-1)*duration_var_ptr_(node_num_-1)) == 0
             ).evaluator().get());
 
     end_constraints_.push_back(
-            program_->AddLinearConstraint(end_var_ptr_(0), 0, 0).evaluator().get());
+            program_->AddLinearConstraint(end_var_ptr_(0),  0, 0).evaluator().get());
     end_constraints_.push_back(
             program_->AddLinearConstraint(end_var_ptr_(1), 0, 0).evaluator().get());
     end_constraints_.push_back(
             program_->AddLinearConstraint(end_var_ptr_(2), 0, 0).evaluator().get());
+
+    drake::symbolic::Expression Cost;
+
+    for (int i = 0; i < (node_num_-1); ++i) {
+        Cost = Cost + drake::symbolic::pow((node_list_[i+1]->decision_var_ptr_(3)-
+                node_list_[i]->decision_var_ptr_(3)),2) +
+                        drake::symbolic::pow((node_list_[i+1]->decision_var_ptr_(4)-node_list_[i]->decision_var_ptr_(4)),
+                                             2) + drake::symbolic::pow((node_list_[i+1]->decision_var_ptr_(5)-
+                                             node_list_[i]->decision_var_ptr_(5)),2) + drake::symbolic::pow(
+                                                     (node_list_[i+1]->decision_var_ptr_(7)-
+                                                     node_list_[i]->decision_var_ptr_(7)),2);
+    }
+    // add end;
+    program_->AddCost(Cost);
 }
 
 void MPC::update(double rest_time, int current_state, std::vector<double>& data)
@@ -365,7 +379,7 @@ void MPC::update(double rest_time, int current_state, std::vector<double>& data)
 
     Eigen::VectorXd inf_vector(1);
     inf_vector << std::numeric_limits<double>::infinity();
-    for (int i = 0; i < (node_num_-1); ++i) {
+    for (int i = 0; i < node_num_; ++i) {
         int loop_state = (current_state+i) % 4;
         // update lambda
         if (loop_state == 0 || loop_state == 2){
@@ -429,56 +443,57 @@ void MPC::update(double rest_time, int current_state, std::vector<double>& data)
         }
 
         // update foot position
+        if (i != (node_num_-1)) {
+            if (loop_state == 1 || loop_state == 3) {
+                foot_constraints_[i * 6 + 0]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 0]->UpdateUpperBound(tmp_word);
+                foot_constraints_[i * 6 + 1]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 1]->UpdateUpperBound(tmp_word);
+                foot_constraints_[i * 6 + 2]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 2]->UpdateUpperBound(tmp_word);
+                foot_constraints_[i * 6 + 3]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 3]->UpdateUpperBound(tmp_word);
+                foot_constraints_[i * 6 + 4]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 4]->UpdateUpperBound(tmp_word);
+                foot_constraints_[i * 6 + 5]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 5]->UpdateUpperBound(tmp_word);
+            }
 
-        if (loop_state == 1 || loop_state == 3){
-            foot_constraints_[i*6+0]->UpdateLowerBound(tmp_word);
-            foot_constraints_[i*6+0]->UpdateUpperBound(tmp_word);
-            foot_constraints_[i*6+1]->UpdateLowerBound(tmp_word);
-            foot_constraints_[i*6+1]->UpdateUpperBound(tmp_word);
-            foot_constraints_[i*6+2]->UpdateLowerBound(tmp_word);
-            foot_constraints_[i*6+2]->UpdateUpperBound(tmp_word);
-            foot_constraints_[i*6+3]->UpdateLowerBound(tmp_word);
-            foot_constraints_[i*6+3]->UpdateUpperBound(tmp_word);
-            foot_constraints_[i*6+4]->UpdateLowerBound(tmp_word);
-            foot_constraints_[i*6+4]->UpdateUpperBound(tmp_word);
-            foot_constraints_[i*6+5]->UpdateLowerBound(tmp_word);
-            foot_constraints_[i*6+5]->UpdateUpperBound(tmp_word);
+            // left double
+            if (loop_state == 0) {
+                foot_constraints_[i * 6 + 0]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 0]->UpdateUpperBound(tmp_word);
+                foot_constraints_[i * 6 + 1]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 1]->UpdateUpperBound(tmp_word);
+                foot_constraints_[i * 6 + 2]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 2]->UpdateUpperBound(tmp_word);
+
+                foot_constraints_[i * 6 + 3]->UpdateLowerBound(-inf_vector);
+                foot_constraints_[i * 6 + 3]->UpdateUpperBound(inf_vector);
+                foot_constraints_[i * 6 + 4]->UpdateLowerBound(-inf_vector);
+                foot_constraints_[i * 6 + 4]->UpdateUpperBound(inf_vector);
+                foot_constraints_[i * 6 + 5]->UpdateLowerBound(-inf_vector);
+                foot_constraints_[i * 6 + 5]->UpdateUpperBound(inf_vector);
+
+            }
+
+            if (loop_state == 2) {
+                foot_constraints_[i * 6 + 0]->UpdateLowerBound(-inf_vector);
+                foot_constraints_[i * 6 + 0]->UpdateUpperBound(inf_vector);
+                foot_constraints_[i * 6 + 1]->UpdateLowerBound(-inf_vector);
+                foot_constraints_[i * 6 + 1]->UpdateUpperBound(inf_vector);
+                foot_constraints_[i * 6 + 2]->UpdateLowerBound(-inf_vector);
+                foot_constraints_[i * 6 + 2]->UpdateUpperBound(inf_vector);
+
+                foot_constraints_[i * 6 + 3]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 3]->UpdateUpperBound(tmp_word);
+                foot_constraints_[i * 6 + 4]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 4]->UpdateUpperBound(tmp_word);
+                foot_constraints_[i * 6 + 5]->UpdateLowerBound(tmp_word);
+                foot_constraints_[i * 6 + 5]->UpdateUpperBound(tmp_word);
+
+            }
         }
-
-        // left double
-        if(loop_state == 0){
-          foot_constraints_[i*6+0]->UpdateLowerBound(tmp_word);
-          foot_constraints_[i*6+0]->UpdateUpperBound(tmp_word);
-          foot_constraints_[i*6+1]->UpdateLowerBound(tmp_word);
-          foot_constraints_[i*6+1]->UpdateUpperBound(tmp_word);
-          foot_constraints_[i*6+2]->UpdateLowerBound(tmp_word);
-          foot_constraints_[i*6+2]->UpdateUpperBound(tmp_word);
-
-          foot_constraints_[i*6+3]->UpdateLowerBound(-inf_vector);
-          foot_constraints_[i*6+3]->UpdateUpperBound(inf_vector);
-          foot_constraints_[i*6+4]->UpdateLowerBound(-inf_vector);
-          foot_constraints_[i*6+4]->UpdateUpperBound(inf_vector);
-          foot_constraints_[i*6+5]->UpdateLowerBound(-inf_vector);
-          foot_constraints_[i*6+5]->UpdateUpperBound(inf_vector);
-
-        }
-
-      if(loop_state == 2){
-        foot_constraints_[i*6+0]->UpdateLowerBound(-inf_vector);
-        foot_constraints_[i*6+0]->UpdateUpperBound(inf_vector);
-        foot_constraints_[i*6+1]->UpdateLowerBound(-inf_vector);
-        foot_constraints_[i*6+1]->UpdateUpperBound(inf_vector);
-        foot_constraints_[i*6+2]->UpdateLowerBound(-inf_vector);
-        foot_constraints_[i*6+2]->UpdateUpperBound(inf_vector);
-
-        foot_constraints_[i*6+3]->UpdateLowerBound(tmp_word);
-        foot_constraints_[i*6+3]->UpdateUpperBound(tmp_word);
-        foot_constraints_[i*6+4]->UpdateLowerBound(tmp_word);
-        foot_constraints_[i*6+4]->UpdateUpperBound(tmp_word);
-        foot_constraints_[i*6+5]->UpdateLowerBound(tmp_word);
-        foot_constraints_[i*6+5]->UpdateUpperBound(tmp_word);
-
-      }
     }
 }
 

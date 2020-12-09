@@ -110,20 +110,28 @@ void OptNode::build()
     );
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(23) >= 0.8).evaluator().get()
+            decision_var_ptr_(23) == 0.868).evaluator().get()
     );
 
-    com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(23) <= 0.92).evaluator().get()
-    );
+    //com_z_constraints_.push_back(program_->AddLinearConstraint(
+    //        decision_var_ptr_(23) <= 0.92).evaluator().get()
+    //);
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(24) >= 0.8).evaluator().get()
+            decision_var_ptr_(24) == 0.868).evaluator().get()
     );
 
-    com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(24) <= 0.92).evaluator().get()
-    );
+    //com_z_constraints_.push_back(program_->AddLinearConstraint(
+    //        decision_var_ptr_(24) <= 0.92).evaluator().get()
+    //);
+
+    geo_constraints_.push_back(program_->AddLinearConstraint(
+            decision_var_ptr_(10), -0.7, 0.7
+            ).evaluator().get());
+
+    geo_constraints_.push_back(program_->AddLinearConstraint(
+            decision_var_ptr_(13), -0.7, 0.7
+            ).evaluator().get());
 }
 
 void OptNode::print_var(const drake::solvers::MathematicalProgramResult& result)

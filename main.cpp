@@ -3,7 +3,7 @@
 #include "MPC.h"
 
 int main() {
-    MPC mpc(25, 10, 7000, 34, 0.02, 0.35);
+    MPC mpc(25, 24, 10000, 34, 0.01, 0.35);
 
     std::vector<double> test_data;
     test_data.push_back(-0.0114496);
@@ -24,13 +24,13 @@ int main() {
     test_data.push_back(-0.2);
     test_data.push_back(0);
 
-    test_data.push_back(0.37);
+    test_data.push_back(0.0);
     test_data.push_back(0);
     test_data.push_back(0);
 
     mpc.build();
 
-    mpc.update(0.02, 0, test_data);
+    mpc.update(0.01, 0, test_data);
 
 
     //std::cout<<drake::solvers::ChooseBestSolver(*mpc.program_).name()<<std::endl;
