@@ -43,13 +43,16 @@ private:
     std::vector<std::unique_ptr<OptNode>> node_list_;
 
     std::vector<drake::solvers::LinearConstraint*> initial_constraints_;
-    std::vector<drake::solvers::LinearConstraint*> final_constraints_;
+    std::vector<drake::solvers::Constraint*> final_constraints_;
 
     drake::solvers::VectorXDecisionVariable duration_var_ptr_;
     std::vector<drake::solvers::LinearConstraint*> duration_constraints_;
 
     std::vector<drake::solvers::Constraint*> dynamics_constraints_;
     std::vector<drake::solvers::LinearConstraint*> foot_constraints_;
+
+    drake::solvers::VectorXDecisionVariable end_var_ptr_;
+    std::vector<drake::solvers::LinearConstraint*> end_constraints_;
 
     std::vector<double> time_vec_;
 };

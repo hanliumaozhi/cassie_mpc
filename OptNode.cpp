@@ -102,27 +102,27 @@ void OptNode::build()
     //com z constraint
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(2) >= 0.7).evaluator().get()
+            decision_var_ptr_(2) >= 0.8).evaluator().get()
             );
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(2) <= 0.95).evaluator().get()
+            decision_var_ptr_(2) <= 0.92).evaluator().get()
     );
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(23) >= 0.7).evaluator().get()
+            decision_var_ptr_(23) >= 0.8).evaluator().get()
     );
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(23) <= 0.95).evaluator().get()
+            decision_var_ptr_(23) <= 0.92).evaluator().get()
     );
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(24) >= 0.7).evaluator().get()
+            decision_var_ptr_(24) >= 0.8).evaluator().get()
     );
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(24) <= 0.95).evaluator().get()
+            decision_var_ptr_(24) <= 0.92).evaluator().get()
     );
 }
 
