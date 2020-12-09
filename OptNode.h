@@ -15,15 +15,20 @@ public:
 
     void build();
 
+    void print_var(const drake::solvers::MathematicalProgramResult& result);
+
 
     std::shared_ptr<drake::solvers::MathematicalProgram> program_;
     drake::solvers::VectorXDecisionVariable decision_var_ptr_;
     std::string var_name_;
     int var_size_;
 
+    std::unique_ptr<Eigen::VectorXd> var_sol_;
+
     std::vector<drake::solvers::Constraint*> foot_motion_constraints_;
     std::vector<drake::solvers::LinearConstraint*> zmp_constraints_;
     std::vector<drake::solvers::LinearConstraint*> com_z_constraints_;
+
 };
 
 

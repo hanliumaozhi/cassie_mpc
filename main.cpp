@@ -3,7 +3,7 @@
 #include "MPC.h"
 
 int main() {
-    MPC mpc(25, 10, 7000, 34, 0.02, 0.35);
+    MPC mpc(25, 11, 7000, 34, 0.02, 0.35);
 
     std::vector<double> test_data;
     test_data.push_back(-0.0114496);
@@ -44,5 +44,6 @@ int main() {
     const drake::solvers::MathematicalProgramResult result = ss.Solve(*mpc.program_);
 
     std::cout<<result.is_success()<<std::endl;
+    mpc.print_var(result);
     return 0;
 }

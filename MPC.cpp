@@ -13,7 +13,7 @@ MPC::MPC(int var_num_per_node, int node_num, double spring_stiffness, double tot
     double_support_duration_(double_support_duration),
     single_support_duration_(single_support_duration){
     program_ = std::make_shared<drake::solvers::MathematicalProgram>();
-    var_sol_ = std::make_unique<Eigen::VectorXd>(var_num_per_node_*node_num_);
+    var_sol_ = std::make_unique<Eigen::VectorXd>((node_num_-1));
 
     duration_var_ptr_ = program_->NewContinuousVariables((node_num_-1), "duration_var");
 
@@ -382,7 +382,16 @@ void MPC::update(double rest_time, int current_state, std::vector<double>& data)
 
       }
     }
+}
 
-
-
+void MPC::print_var(const drake::solvers::MathematicalProgramResult& result)
+{
+    for (int i = 0; i < node_num_; ++i) {
+        node_list_[i]->print_var(result);
+    }
+    *var_sol_ = result.GetSolution(duration_var_ptr_);
+    for (int i = 0; i < (node_num_-1); ++i) {
+        std::cout<<(*var_sol_)(i)<<" ";
+    }
+    std::cout<<std::endl;
 }

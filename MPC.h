@@ -22,6 +22,8 @@ public:
 
     void update(double rest_time, int current_state, std::vector<double>& data);
 
+    void print_var(const drake::solvers::MathematicalProgramResult& result);
+
     std::unique_ptr<Eigen::VectorXd> var_sol_;
     std::shared_ptr<drake::solvers::MathematicalProgram> program_;
 
