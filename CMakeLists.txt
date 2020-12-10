@@ -10,6 +10,9 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+set(CMAKE_C_COMPILER /usr/bin/gcc-10)
+set(CMAKE_CXX_COMPILER /usr/bin/g++-10)
+
 if(APPLE)
     set(FIND_PYTHON_EXECUTABLE_PATHS /usr/local/opt/python@3.8/bin)
     set(FIND_PYTHON_INTERP_VERSION 3.8)

@@ -74,14 +74,14 @@ void OptNode::build()
     auto left_com = rot_matrix*(left_foot-com_position);
 
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(left_com(0) >= -0.02).evaluator().get());
-    foot_motion_constraints_.push_back(
-            program_->AddConstraint(left_com(0) <= 0.4).evaluator().get());
+            program_->AddConstraint(left_com(0) , -0.02, 0.4).evaluator().get());
+    //foot_motion_constraints_.push_back(
+    //        program_->AddConstraint(left_com(0) <= 0.4).evaluator().get());
 
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(left_com(1) >= -0.4).evaluator().get());
-    foot_motion_constraints_.push_back(
-            program_->AddConstraint(left_com(1) <= 0.4).evaluator().get());
+            program_->AddConstraint(left_com(1), -0.4, 0.4).evaluator().get());
+    //foot_motion_constraints_.push_back(
+    //        program_->AddConstraint(left_com(1) <= 0.4).evaluator().get());
 
     //right
     Eigen::Matrix<drake::symbolic::Expression, 3, 1> right_foot;
@@ -90,24 +90,24 @@ void OptNode::build()
     auto right_com = rot_matrix*(right_foot-com_position);
 
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(right_com(0) >= -0.4).evaluator().get());
-    foot_motion_constraints_.push_back(
-            program_->AddConstraint(right_com(0) <= 0.02).evaluator().get());
+            program_->AddConstraint(right_com(0) , -0.4, 0.02).evaluator().get());
+    //foot_motion_constraints_.push_back(
+    //        program_->AddConstraint(right_com(0) <= 0.02).evaluator().get());
 
     foot_motion_constraints_.push_back(
-            program_->AddConstraint(right_com(1) >= -0.4).evaluator().get());
-    foot_motion_constraints_.push_back(
-            program_->AddConstraint(right_com(1) <= 0.4).evaluator().get());
+            program_->AddConstraint(right_com(1) , -0.4, 0.4).evaluator().get());
+    //foot_motion_constraints_.push_back(
+    //        program_->AddConstraint(right_com(1) <= 0.4).evaluator().get());
 
     //com z constraint
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(2) >= 0.8).evaluator().get()
+            decision_var_ptr_(2) , 0.83, 0.9).evaluator().get()
             );
 
-    com_z_constraints_.push_back(program_->AddLinearConstraint(
-            decision_var_ptr_(2) <= 0.92).evaluator().get()
-    );
+    //com_z_constraints_.push_back(program_->AddLinearConstraint(
+    //        decision_var_ptr_(2) <= 0.92).evaluator().get()
+    //);
 
     com_z_constraints_.push_back(program_->AddLinearConstraint(
             decision_var_ptr_(23) == 0.868).evaluator().get()

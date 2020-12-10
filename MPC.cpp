@@ -311,12 +311,28 @@ void MPC::build() {
             beta_2_y*drake::symbolic::exp(-alpha*duration_var_ptr_(node_num_-1))+zmp_end_y) == 0
             ).evaluator().get());
 
+
+
     //theta
     final_constraints_.push_back(
             program_->AddConstraint(end_var_ptr_(2) - (node_list_[node_num_-1]->decision_var_ptr_(6)+
             node_list_[node_num_-1]->decision_var_ptr_(7)*duration_var_ptr_(node_num_-1)+
             0.5*node_list_[node_num_-1]->decision_var_ptr_(14)*duration_var_ptr_(node_num_-1)*duration_var_ptr_(node_num_-1)) == 0
             ).evaluator().get());
+
+    // z
+
+    drake::symbolic::Expression d1 = node_list_[node_num_-1]->decision_var_ptr_(2) -
+                                     node_list_[node_num_-1]->decision_var_ptr_(23) + 9.81/(omega_*omega_);
+
+    drake::symbolic::Expression d2 = node_list_[node_num_-1]->decision_var_ptr_(5)/(omega_) -
+                                     (node_list_[node_num_-1]->decision_var_ptr_(24)-node_list_[node_num_-1]->decision_var_ptr_(23))/(duration_var_ptr_(node_num_-1)*omega_);
+
+    // z
+    final_constraints_.push_back(
+            program_->AddConstraint((d1*drake::symbolic::cos(omega_*duration_var_ptr_(node_num_-1)) +
+            d2*drake::symbolic::sin(omega_*duration_var_ptr_(node_num_-1))+node_list_[node_num_-1]->decision_var_ptr_(24)
+            -9.81/(omega_*omega_)), 0.83, 0.9).evaluator().get());
 
     end_constraints_.push_back(
             program_->AddLinearConstraint(end_var_ptr_(0),  0, 0).evaluator().get());
@@ -325,7 +341,7 @@ void MPC::build() {
     end_constraints_.push_back(
             program_->AddLinearConstraint(end_var_ptr_(2), 0, 0).evaluator().get());
 
-    drake::symbolic::Expression Cost;
+    /*drake::symbolic::Expression Cost;
 
     for (int i = 0; i < (node_num_-1); ++i) {
         Cost = Cost + drake::symbolic::pow((node_list_[i+1]->decision_var_ptr_(3)-
@@ -339,7 +355,7 @@ void MPC::build() {
     }
 
     // add end;
-    program_->AddCost(Cost);
+    program_->AddCost(Cost);*/
 }
 
 void MPC::update(double rest_time, int current_state, std::vector<double>& data)

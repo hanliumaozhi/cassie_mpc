@@ -25,7 +25,7 @@ int main() {
     test_data.push_back(-0.2);
     test_data.push_back(0);
 
-    test_data.push_back(0.0);
+    test_data.push_back(0.1);
     test_data.push_back(0);
     test_data.push_back(0);
 
@@ -33,14 +33,17 @@ int main() {
 
 
     //std::cout<<drake::solvers::ChooseBestSolver(*mpc.program_).name()<<std::endl;
-
-    mpc.program_->SetSolverOption(drake::solvers::SnoptSolver::id(), "Print file",
-                           "../mpc_snopt.out");
     //mpc.program_->SetSolverOption(drake::solvers::SnoptSolver::id(), "Scale option",
     //                              0);
 
     auto ss = drake::solvers::SnoptSolver();
+
+    mpc.program_->SetSolverOption(drake::solvers::SnoptSolver::id(), "Print file",
+                                  "../mpc_snopt.out");
+    //mpc.program_->SetSolverOption(drake::solvers::SnoptSolver::id(), "Scale option",
+    //                              1);
     //auto ii = drake::solvers::IpoptSolver();
+
 
     auto t1 = std::chrono::high_resolution_clock::now();
     mpc.update(0.01, 0, test_data);
